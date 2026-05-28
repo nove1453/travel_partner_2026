@@ -1,9 +1,971 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabi Personality Test - 旅役職診断</title>
+  <!-- Google Fonts for stylish Scandinavian-like minimalist typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       1. Design Tokens & Base Styles (北欧モダン・Instagram風・余白重視)
+       ========================================================================== */
+    :root {
+      --bg-color: #FAF9F6;          /* 暖かみのある洗練されたオフホワイト */
+      --text-main: #2C2C2C;         /* 強い黒を避けたニュアンスブラック */
+      --text-sub: #7A7A7A;          /* サブコピー用のニュアンスグレー */
+      --accent-color: #D3BCA2;      /* 北欧風の柔らかいサンドベージュ */
+      --accent-light: #EFE9E1;     /* ホバーやアクティブ用の薄いベージュ */
+      --card-bg: #FFFFFF;           /* カードの背景（ピュアホワイト） */
+      --border-color: #EBEBEB;      /* 繊細な境界線 */
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* 極めて柔らかい影 */
+      --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.08); /* ホバー時の浮き出るような影 */
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* より滑らかなイージング */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', 'Montserrat', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ==========================================================================
+       2. Layout Elements
+       ========================================================================== */
+    header {
+      width: 100%;
+      max-width: 600px;
+      padding: 48px 24px 24px 24px;
+      text-align: center;
+      background-color: var(--bg-color);
+    }
+
+    .brand-subtitle {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .brand-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .brand-description {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: 300;
+      max-width: 440px;
+      margin: 0 auto 32px auto;
+      line-height: 1.7;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 0 20px 80px 20px;
+    }
+
+    /* ==========================================================================
+       3. Question List Styles (カードUI)
+       ========================================================================== */
+    .questions-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .question-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      position: relative;
+    }
+
+    /* 未回答時に強調するエラー表示用スタイル */
+    .question-card.highlight-error {
+      border: 1.5px solid #EAA1A1;
+      background-color: #FFFDFD;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .question-number {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      background-color: var(--bg-color);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      word-break: break-all;
+    }
+
+    /* 5段階回答オプション */
+    .options-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      margin: 0 8px;
+    }
+
+    /* 5択のボタン同士を結ぶ薄い線 */
+    .options-group::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #F0F0F0;
+      z-index: 1;
+      transform: translateY(-50%);
+    }
+
+    .option-label {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      width: 18%; /* スマホでも横並びに収まる絶妙な幅 */
+    }
+
+    .option-input {
+      display: none; /* デフォルトのラジオボタンは非表示 */
+    }
+
+    /* カスタム円形ボタンのデザイン */
+    .option-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background-color: var(--card-bg);
+      border: 2px solid #E8E8E8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: var(--transition);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+    }
+
+    /* 5択の選択肢の強弱にあわせてサイズを変更し、Instagramの洗練された感覚を表現 */
+    /* かなりそう思う・全く思わない（両端）: 大 */
+    .option-label:nth-child(1) .option-circle,
+    .option-label:nth-child(5) .option-circle {
+      width: 44px;
+      height: 44px;
+    }
+    /* ややそう思う・あまり思わない（中間）: 中 */
+    .option-label:nth-child(2) .option-circle,
+    .option-label:nth-child(4) .option-circle {
+      width: 38px;
+      height: 38px;
+    }
+    /* どちらでもない（中央）: 小 */
+    .option-label:nth-child(3) .option-circle {
+      width: 32px;
+      height: 32px;
+    }
+
+    .option-text-mini {
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      margin-top: 8px;
+      text-align: center;
+      font-weight: 300;
+      white-space: nowrap;
+    }
+
+    /* ホバー時の柔らかい変化 */
+    @media (hover: hover) {
+      .option-label:hover .option-circle {
+        border-color: var(--accent-color);
+        background-color: var(--accent-light);
+      }
+    }
+
+    /* ラジオボタン選択時のアクティブ状態 (上品なくすみカラー) */
+    .option-input:checked + .option-circle {
+      border-color: var(--accent-color);
+      background-color: var(--accent-color);
+      transform: scale(1.1);
+    }
+    
+    .option-input:checked + .option-circle::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       4. Validation & Error Box
+       ========================================================================== */
+    .error-box {
+      background-color: #FFF5F5;
+      border: 1px solid #F3D9D9;
+      color: #D36C6C;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 0.85rem;
+      display: none;
+      text-align: center;
+      font-weight: 500;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       5. Action Buttons
+       ========================================================================== */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      max-width: 340px;
+      padding: 18px 32px;
+      background-color: var(--text-main);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 30px; /* 角丸を大きめにし、コロンとした可愛いフォルムに */
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: var(--transition);
+    }
+
+    .btn-submit:hover {
+      background-color: #404040;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       6. Diagnostic Results View (Instagram風・雑誌風のおしゃれ縦並びカード)
+       ========================================================================== */
+    .result-section {
+      display: none; /* 初期は非表示 */
+      margin-top: 50px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      animation: slideUp 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 16タイプ別イラスト画像エリア */
+    .result-image-container {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto 28px auto;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      position: relative;
+      background-color: #F5F3EE; /* ロード中やプレースホルダー用のやさしい下地カラー */
+      aspect-ratio: 16 / 10; /* アスペクト比を維持してガタつきを防ぐ */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .result-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: var(--transition);
+    }
+
+    /* ホバー時のズーム＆シャドウ強化エフェクト */
+    .result-image-container:hover {
+      transform: scale(1.02);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .result-image-container:hover .result-image {
+      transform: scale(1.04);
+    }
+
+    /* 画像読み込み失敗時のfallbackプレースホルダー */
+    .image-placeholder {
+      display: none;
+      padding: 24px;
+      color: var(--text-sub);
+      text-align: center;
+      font-size: 0.9rem;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .image-placeholder svg {
+      stroke: var(--accent-color);
+      width: 40px;
+      height: 40px;
+    }
+
+    .result-badge {
+      display: inline-block;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--accent-color);
+      margin-bottom: 8px;
+    }
+
+    .result-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .result-sub {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: var(--text-sub);
+      margin-bottom: 24px;
+    }
+
+    .result-description-card {
+      background-color: var(--bg-color);
+      border-radius: var(--radius-md);
+      padding: 28px 24px;
+      margin: 24px 0 32px 0;
+      text-align: left;
+    }
+
+    .result-description-card p {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: #4A4A4A;
+      font-weight: 400;
+    }
+
+    /* 4つの軸の簡易ステータスバー表示 */
+    .axis-chart {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .axis-chart-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .axis-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 0.75rem;
+    }
+
+    .axis-label-left {
+      width: 110px;
+      text-align: right;
+      padding-right: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .axis-progress-bg {
+      flex-grow: 1;
+      height: 6px;
+      background-color: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .axis-progress-bar {
+      height: 100%;
+      background-color: var(--accent-color);
+      border-radius: 3px;
+      width: 0%; /* JSで動的に変更 */
+      transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .axis-label-right {
+      width: 110px;
+      text-align: left;
+      padding-left: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    /* リセットボタン */
+    .btn-reset {
+      margin-top: 24px;
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      text-decoration: underline;
+      font-size: 0.8rem;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: var(--transition);
+    }
+
+    .btn-reset:hover {
+      color: var(--text-main);
+    }
+
+    /* フッター */
+    footer {
+      margin-top: auto;
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #A0A0A0;
+      font-family: 'Montserrat', sans-serif;
+      letter-spacing: 0.05em;
+    }
+
+    /* ==========================================================================
+       7. Responsive Tweaks
+       ========================================================================== */
+    @media (max-width: 480px) {
+      .brand-title {
+        font-size: 1.5rem;
+      }
+      .question-card {
+        padding: 24px 16px;
+      }
+      .option-circle {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      .option-text-mini {
+        font-size: 0.55rem;
+      }
+      .axis-label-left, .axis-label-right {
+        width: 80px;
+        font-size: 0.7rem;
+      }
+      .result-section {
+        padding: 32px 16px;
+      }
+    }
+  </style>
+</head>
 <body>
-  <div id="quiz"></div>
 
-  <button id="submitBtn">
-    診断する
-  </button>
+  <!-- ヘッダー -->
+  <header>
+    <div class="brand-subtitle">Tabi Personality Test</div>
+    <h1 class="brand-title">旅役職診断</h1>
+    <p class="brand-description">
+      旅行中のあなたの何気ない行動や、ふと考えちゃうこと。<br>
+      32の質問から、16パターンの愛すべき「旅の役職」を導き出します。
+    </p>
+  </header>
 
-  <script src="app.js"></script>
+  <!-- メインコンテンツ -->
+  <div class="container">
+    
+    <!-- 質問一覧 -->
+    <form id="quiz-form">
+      <div id="questions-container" class="questions-wrapper">
+        <!-- JSにより質問カードがここに動的に生成されます -->
+      </div>
+
+      <!-- エラー通知エリア -->
+      <div id="error-message" class="error-box"></div>
+
+      <!-- アクションエリア -->
+      <div class="actions">
+        <button type="submit" class="btn-submit">結果を診断する</button>
+      </div>
+    </form>
+
+    <!-- 診断結果表示ビュー (イラスト主役の縦並びカード) -->
+    <div id="result-view" class="result-section">
+      
+      <!-- 16タイプイラスト画像表示エリア -->
+      <div class="result-image-container">
+        <img id="result-img" class="result-image" src="" alt="旅役職イラスト">
+        
+        <!-- エラーハンドリング時(画像読み込み失敗時)のプレースホルダー -->
+        <div id="result-img-fallback" class="image-placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span style="font-weight: 500;">旅のおもいで準備中...</span>
+        </div>
+      </div>
+
+      <!-- 文字情報表示エリア -->
+      <div id="result-code" class="result-badge">CODE</div>
+      <h2 id="result-title" class="result-title">役職名</h2>
+      <div id="result-sub" class="result-sub">「一言キャッチコピー」</div>
+      
+      <!-- 説明文 -->
+      <div class="result-description-card">
+        <p id="result-description">診断結果の説明がここに入ります。</p>
+      </div>
+
+      <!-- 各軸のパーセンテージチャート -->
+      <div class="axis-chart">
+        <h3 class="axis-chart-title">あなたの旅パラメータ</h3>
+        
+        <!-- P vs F -->
+        <div class="axis-row">
+          <span class="axis-label-left">P 旅参謀</span>
+          <div class="axis-progress-bg">
+            <div id="bar-PF" class="axis-progress-bar"></div>
+          </div>
+          <span class="axis-label-right">F 放浪系</span>
+        </div>
+
+        <!-- A vs C -->
+        <div class="axis-row">
+          <span class="axis-label-left">A アクティブ</span>
+          <div class="axis-progress-bg">
+            <div id="bar-AC" class="axis-progress-bar"></div>
+          </div>
+          <span class="axis-label-right">C チル</span>
+        </div>
+
+        <!-- V vs E -->
+        <div class="axis-row">
+          <span class="axis-label-left">V 映え</span>
+          <div class="axis-progress-bg">
+            <div id="bar-VE" class="axis-progress-bar"></div>
+          </div>
+          <span class="axis-label-right">E 体験</span>
+        </div>
+
+        <!-- L vs S -->
+        <div class="axis-row">
+          <span class="axis-label-left">L 贅沢</span>
+          <div class="axis-progress-bg">
+            <div id="bar-LS" class="axis-progress-bar"></div>
+          </div>
+          <span class="axis-label-right">S 節約</span>
+        </div>
+      </div>
+
+      <button id="btn-reset" class="btn-reset">もう一度診断する</button>
+    </div>
+
+  </div>
+
+  <!-- フッター -->
+  <footer>
+    &copy; 2026 Tabi Personality Test. All rights reserved.
+  </footer>
+
+  <!-- ==========================================================================
+       JavaScript Logic
+       ========================================================================== -->
+  <script>
+    // 1. 指定の質問定義データ
+    const questions = [
+      // ----------------------------------------------------
+      // ① 計画性軸 (P = 計画型 / F = 自由型)
+      // ----------------------------------------------------
+      { id: 1, text: "旅行前、GoogleMapの保存がどんどん増えていく", axis: "P", reverse: false },
+      { id: 2, text: "その場で決まる予定変更はむしろワクワクして楽しい", axis: "P", reverse: true },
+      { id: 3, text: "何をするか決まっていない時間があると、実は少し不安...", axis: "P", reverse: false },
+      { id: 4, text: "あえて下調べせず、現地で偶然見つけた惹かれるお店に飛び込みたい", axis: "P", reverse: true },
+      { id: 5, text: "電車の乗り換えや移動時間まで細かく計算して予定を組む", axis: "P", reverse: false },
+      { id: 6, text: "目的地を決めず、「とりあえず歩く」時間が一番好きだったりする", axis: "P", reverse: true },
+      { id: 7, text: "人気店の予約が事前にしっかり取れていないと落ち着かない", axis: "P", reverse: false },
+      { id: 8, text: "「旅行は予定通りに進まないもの」と最初から割り切っている", axis: "P", reverse: true },
+
+      // ----------------------------------------------------
+      // ② 行動量軸 (A = アクティブ / C = チル)
+      // ----------------------------------------------------
+      { id: 9, text: "せっかく行くなら、朝から予定をぎっしり詰め込みたい", axis: "A", reverse: false },
+      { id: 10, text: "何もしないでボーッとする「カフェ休憩」の時間が旅の最重要項目だ", axis: "A", reverse: true },
+      { id: 11, text: "「せっかくここまで来たんだから！」と欲張って予定を増やしがち", axis: "A", reverse: false },
+      { id: 12, text: "観光よりも、宿のベッドやお風呂でのんびりチャージする時間が必要だ", axis: "A", reverse: true },
+      { id: 13, text: "一日の中に複数のエリアや観光スポットをどんどん回りたい", axis: "A", reverse: false },
+      { id: 14, text: "正直なところ、観光中の移動や人混みだけで疲れ果ててしまいやすい", axis: "A", reverse: true },
+      { id: 15, text: "歩きすぎてヘトヘトになっても、夜遅くまで動き回れるタフさがある", axis: "A", reverse: false },
+      { id: 16, text: "予定はあえてスカスカにして、旅先での「ゆとり時間」を大事に残したい", axis: "A", reverse: true },
+
+      // ----------------------------------------------------
+      // ③ 目的軸 (V = 映え / E = 体験)
+      // ----------------------------------------------------
+      { id: 17, text: "心奪われる美しい景色やおしゃれな空間を見ると、反射的にカメラを構える", axis: "V", reverse: false },
+      { id: 18, text: "定番の有名観光スポットより、地元民にまぎれる空気感のほうが心惹かれる", axis: "V", reverse: true },
+      { id: 19, text: "気づけば旅先から戻ったスマホのカメラフォルダがとんでもない枚数になる", axis: "V", reverse: false },
+      { id: 20, text: "SNSで“映えるか”かどうかよりも、自分のリアルな感覚が“楽しいか”を優先したい", axis: "V", reverse: true },
+      { id: 21, text: "世界観が洗練されたおしゃれなカフェやホテルを熱心に探してしまう", axis: "V", reverse: false },
+      { id: 22, text: "お世辞にも綺麗とは言えないけれど、味のある「ローカル食堂」にワクワクする", axis: "V", reverse: true },
+      { id: 23, text: "一緒にいる人を待たせてでも、完璧な写真を撮るために立ち止まってしまう", axis: "V", reverse: false },
+      { id: 24, text: "観光パンフレットに載る名所に行くより、ただその街を歩くだけで満たされる", axis: "V", reverse: true },
+
+      // ----------------------------------------------------
+      // ④ お金軸 (L = 贅沢 / S = 節約)
+      // ----------------------------------------------------
+      { id: 25, text: "旅行のクオリティを左右する「宿（宿泊）」にはお財布を気にせず投資したい", axis: "L", reverse: false },
+      { id: 26, text: "移動費や交通機関にお金をかけるのはもったいない。できるだけ安く抑えたい", axis: "L", reverse: true },
+      { id: 27, text: "メニューを見ながら「せっかくの旅行なら、一番良い店に行こう」が口癖だ", axis: "L", reverse: false },
+      { id: 28, text: "高くて有名なお店より、コスパ最強な地元の「隠れた穴場」を探すのが得意だ", axis: "L", reverse: true },
+      { id: 29, text: "旅先で足が疲れたら、ためらわずにタクシーを使う心の余裕がある", axis: "L", reverse: false },
+      { id: 30, text: "旅費をどれだけお得に安く抑えて攻略できたか、にゲーム感覚の喜びを感じる", axis: "L", stroke: true, reverse: true },
+      { id: 31, text: "普段頑張っている自分へのおもてなしとして、旅先では多少の贅沢を許したい", axis: "L", reverse: false },
+      { id: 32, text: "少し工夫してお得に節約ができると、なんだか密かに嬉しくなる", axis: "L", reverse: true }
+    ];
+
+    // 2. 16タイプの性格診断結果マスタ（一言キャッチコピーつき）
+    const personalities = {
+      "PAVL": {
+        name: "旅演出家",
+        tagline: "旅全体の世界観を作り込むタイプ",
+        desc: "あなたが訪れる旅はすべて、完璧にプロデュースされた一本の美しい映画。綿密なスケジューリングと最高級のホテル、そして息をのむような美しい絶景を余すことなく楽しむカリスマです。周囲のメンバーもあなたのセレクトにただ圧倒されるはず。最高の世界観と上質な空間を調和させるセンスはピカイチです。"
+      },
+      "PAVS": {
+        name: "景色収集家",
+        tagline: "絶景や映える景色を見つけるのが得意なタイプ",
+        desc: "美しい光景を絶対に見逃さない、計画的でフットワークの軽いハントマスター。無駄のないルート計画で、話題の絶景スポットや旬な景色を抜群のタイパで集めて回ります。賢くコストを抑えながらも、写真映えや感動スポットのクオリティには一切の妥協なし。センスが光る充実した旅を実現します。"
+      },
+      "PAEL": {
+        name: "感性探訪家",
+        tagline: "その土地の空気や文化に触れて楽しむタイプ",
+        desc: "旅先での出会いや伝統、文化体験にじっくりと時間をかける知的なオーガナイザー。旅行前の計画に余念がなく、その土地ならではのプレミアムな伝統体験や美食に惜しみなく自己投資します。ただ見るだけの観光ではなく、体験を通して自分の内面や教養を豊かにしていく贅沢な旅がお似合いです。"
+      },
+      "PAES": {
+        name: "路地開拓士",
+        tagline: "まだ知られていない場所を開拓するのが好きなタイプ",
+        desc: "計画的かつ効率的に、知る人ぞ知る現地のローカル体験や本物の空気をハントする探検家。ガイドブックの奥深く、地元の人が愛する味わい深い体験を求めてアクティブに足を運びます。コストはスマートに抑えつつも、誰も気づいていないような「隠れ路地の名店」を開拓することに無上の喜びを感じるタイプです。"
+      },
+      "PCVL": {
+        name: "余白貴族",
+        tagline: "何もしない時間も旅の楽しみなタイプ",
+        desc: "ラグジュアリーな時間が流れる高級ホテルや、美しいデザインに囲まれてゆったり流れるひとときを愛するエレガントな旅人。タイトな計画をもとに、贅沢な空間をあえて「何もしない」で味わい尽くす大人な旅を好みます。美しい調度品やリゾートの景色、上質なサービスに癒されるのが最大の幸福です。"
+      },
+      "PCVS": {
+        name: "カフェ漂流家",
+        tagline: "カフェを巡りながらゆるく旅するタイプ",
+        desc: "お気に入りの美しいブックカフェや、静かな美術館を計画的に巡りながら、自分のペースで漂うことを好むアーティスト肌。決してバタバタと動き回らず、スマートでおしゃれな空間に身を置き、時間を節約しながらも心豊かに街の美観をクリップしていきます。静的な「映え」を見出すのが得意です。"
+      },
+      "PCEL": {
+        name: "癒し滞在家",
+        tagline: "宿や空間で心と体をリセットするタイプ",
+        desc: "綿密なプランニングで最高の宿やリラクゼーション体験をリザーブし、極上の快適さにひたる旅のヒーラー。スパや温泉、プライベートな自然環境に囲まれながら、極上のおもてなしに身を委ねます。移動や慌ただしさは最小限に抑え、ただ「そこに流れる空気」を五感いっぱいに味わう旅が定番です。"
+      },
+      "PCES": {
+        name: "静かな放浪家",
+        tagline: "気の向くままに静かに旅を楽しむタイプ",
+        desc: "事前にしっかり安全な宿泊先や基本的な流れを設計した上で、旅先では静かにローカルな時間の移ろいや文学的な空気感に没頭する思思考。豪華さよりも「居心地の良さ」や「素朴な癒し」を重視し、知的なローカル体験と読書のような静寂を愛するインドア派トラベラーです。"
+      },
+      "FAVL": {
+        name: "夜更かし演出家",
+        tagline: "夜の時間を使って思い出を作るタイプ",
+        desc: "その瞬間のトキメキとノリを信じて旅を進める、お洒落で気ままな自由人。気分が高まった瞬間に高級なディナーを予約したり、思いつきで絶景の見えるルーフトップバーへと繰り出します。夜の街のネオンや、一瞬のきらめく世界観を自分の思うままにデコレーションしていく楽しさを噛み締めます。"
+      },
+      "FAVS": {
+        name: "映え放浪家",
+        tagline: "思いついたらすぐ行動！映える瞬間を逃さないタイプ",
+        desc: "直感を頼りに「今いちばん綺麗な場所」へと軽やかに飛び回る、天性のセンスを持つインフルエンサータイプ。ガチガチの計画は息苦しいから苦手。天気が良いからと夕日を見に走り、SNSで見つけた美しい景色へとノリ良く旅路を変えます。等身大でありながら、抜群のおしゃれアンテナを持っています。"
+      },
+      "FAEL": {
+        name: "自由探検家",
+        tagline: "ルールに縛られず自由に旅を楽しむタイプ",
+        desc: "予定調和が大嫌い。現地で心が動いた方向へ好奇心旺盛に飛び込んでいく直感重視のチャレンジャー。お金を惜しまず、その場だからこそ出会えるハプニング的なプレミアム体験やユニークな現地体験に飛びつきます。あなたの旅はいつもドラマチックで予測不能、だからこそ最高のスパイスに満ちています。"
+      },
+      "FAES": {
+        name: "気まぐれ開拓士",
+        tagline: "その時の気分で新しい発見を楽しむタイプ",
+        desc: "思い立った瞬間に身軽なリュック一つでローカル線に飛び乗るような、冒険小説の主人公タイプ。予算はとことんリーズナブルに抑えつつ、直感的に面白いと感じた怪しげな路地裏やユニークな現地文化に恐れず関わっていきます。泥臭くも生き生きとした「リアルな旅の面白さ」を引き出す名手です。"
+      },
+      "FCVL": {
+        name: "月夜の漂流家",
+        tagline: "夜の静けさや月の景色が好きなタイプ",
+        desc: "気まぐれにラグジュアリーな過ごし方を自分流にカスタムする、気高きマイペーストラベラー。旅先で朝目覚めてから「今日はあの高級ホテルスパでまったりしよう」と決めたり、夜風を浴びながらリッチなカクテルを楽しんだり。縛られない自由と、贅沢なご褒美を愛するエレガントな自由主義者です。"
+      },
+      "FCVS": {
+        name: "余白収集家",
+        tagline: "旅の余白や偶然の出会いを大切にするタイプ",
+        desc: "風の吹くままにふらりと歩き、ふと見つけたお洒落なカフェの窓辺で何時間も過ごすような、余白を愛するノマドタイプ。安価で心地よい空間を嗅ぎ分ける天性のアンテナがあり、スケジュールを一切持たないという「究極の贅沢」をスマートに楽しんでいます。静かで美しい瞬間の採集家です。"
+      },
+      "FCEL": {
+        name: "空気感旅行家",
+        tagline: "その土地の空気感や雰囲気を味わうタイプ",
+        desc: "旅先の街角の匂い、流れる音楽、地元の人たちの飾らない笑い声など「目に見えない愛おしい空気感」を、感覚を開いて受け取るポエトリーな旅人。急いでどこかへ行く計画はせず、波の音を聞きながらハンモックに揺られたり、ちょっと上等な宿で地元の風を感じるだけで心が最大に満たされます。"
+      },
+      "FCES": {
+        name: "風まかせ人",
+        tagline: "計画はゆるく、風のように自由に旅するタイプ",
+        desc: "最もルールに縛られない、最もニュートラルで気張らないナチュラル旅人。予算をかけず、計画も立てず、ただ「そこに呼ばれたから来た」ような、自然体極まるスタイルを愛します。観光地化された場所には見向きもせず、素朴なベンチに座ってぼーっと風の流れる音を聞いている時間が一番の癒やしです。"
+      }
+    };
+
+    // ==========================================================================
+    // 3. UI Generation & Controller
+    // ==========================================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      const qContainer = document.getElementById("questions-container");
+      const quizForm = document.getElementById("quiz-form");
+      const errorMsg = document.getElementById("error-message");
+      const resultView = document.getElementById("result-view");
+      const resetBtn = document.getElementById("btn-reset");
+      const resultImg = document.getElementById("result-img");
+      const resultImgFallback = document.getElementById("result-img-fallback");
+
+      // 質問カードの動的生成
+      function generateQuestions() {
+        qContainer.innerHTML = "";
+        questions.forEach((q, index) => {
+          const card = document.createElement("div");
+          card.className = "question-card";
+          card.id = `q-card-${q.id}`;
+          
+          const qNum = index + 1;
+
+          card.innerHTML = `
+            <div class="question-header">
+              <span class="question-number">Q${qNum}</span>
+            </div>
+            <div class="question-text">${q.text}</div>
+            <div class="options-group">
+              <label class="option-label">
+                <input type="radio" name="q-${q.id}" value="5" class="option-input" required>
+                <div class="option-circle"></div>
+                <span class="option-text-mini">そう思う</span>
+              </label>
+              <label class="option-label">
+                <input type="radio" name="q-${q.id}" value="4" class="option-input">
+                <div class="option-circle"></div>
+                <span class="option-text-mini">ややそう</span>
+              </label>
+              <label class="option-label">
+                <input type="radio" name="q-${q.id}" value="3" class="option-input">
+                <div class="option-circle"></div>
+                <span class="option-text-mini">どちらでも</span>
+              </label>
+              <label class="option-label">
+                <input type="radio" name="q-${q.id}" value="2" class="option-input">
+                <div class="option-circle"></div>
+                <span class="option-text-mini">あまり</span>
+              </label>
+              <label class="option-label">
+                <input type="radio" name="q-${q.id}" value="1" class="option-input">
+                <div class="option-circle"></div>
+                <span class="option-text-mini">思わない</span>
+              </label>
+            </div>
+          `;
+          qContainer.appendChild(card);
+        });
+      }
+
+      generateQuestions();
+
+      // 各ラジオボタンタップ時のエラーハイライト自動解除
+      qContainer.addEventListener("change", (e) => {
+        if (e.target.name) {
+          const cardId = e.target.name.replace("q-", "q-card-");
+          const cardElement = document.getElementById(cardId);
+          if (cardElement) {
+            cardElement.classList.remove("highlight-error");
+          }
+        }
+      });
+
+      // 📷 画像エラーハンドリング（fallback処理）
+      resultImg.addEventListener("error", () => {
+        resultImg.style.display = "none";
+        resultImgFallback.style.display = "flex";
+      });
+
+      // 画像ロード成功時はフォールバック表示を非表示にする
+      resultImg.addEventListener("load", () => {
+        resultImg.style.display = "block";
+        resultImgFallback.style.display = "none";
+      });
+
+      // 診断の処理実行
+      quizForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        // 1. 未回答チェック
+        const unanswered = [];
+        questions.forEach((q) => {
+          const selected = quizForm.querySelector(`input[name="q-${q.id}"]:checked`);
+          if (!selected) {
+            unanswered.push(q);
+          }
+        });
+
+        // 2. 未回答がある場合のエラー処理
+        if (unanswered.length > 0) {
+          document.querySelectorAll(".question-card").forEach(c => c.classList.remove("highlight-error"));
+          
+          unanswered.forEach(q => {
+            const card = document.getElementById(`q-card-${q.id}`);
+            if (card) card.classList.add("highlight-error");
+          });
+
+          const firstUnansweredCard = document.getElementById(`q-card-${unanswered[0].id}`);
+          if (firstUnansweredCard) {
+            firstUnansweredCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+
+          const unansweredNumbers = unanswered.map(q => {
+            const index = questions.findIndex(item => item.id === q.id);
+            return `${index + 1}問目`;
+          });
+
+          errorMsg.style.display = "block";
+          errorMsg.innerHTML = `<strong>${unansweredNumbers.join('、')}</strong> が未回答です。<br>タップして回答を完了させてくださいね！`;
+          return;
+        }
+
+        errorMsg.style.display = "none";
+
+        // 3. 診断スコアリング計算
+        const scores = { P: 0, A: 0, V: 0, L: 0 };
+        questions.forEach((q) => {
+          const radioVal = parseInt(quizForm.querySelector(`input[name="q-${q.id}"]:checked`).value, 10);
+          let activeValue = q.reverse ? (6 - radioVal) : radioVal;
+          scores[q.axis] += activeValue;
+        });
+
+        // 4. 4軸コード判定（しきい値24点。各軸8問。平均3以上なら前者）
+        const threshold = 24;
+        const codeP = scores.P >= threshold ? "P" : "F";
+        const codeA = scores.A >= threshold ? "A" : "C";
+        const codeV = scores.V >= threshold ? "V" : "E";
+        const codeL = scores.L >= threshold ? "L" : "S";
+
+        const finalCode = `${codeP}${codeA}${codeV}${codeL}`;
+        const persona = personalities[finalCode];
+
+        // 5. 画像パス自動生成（小文字コード）
+        const imageCode = finalCode.toLowerCase();
+        resultImg.style.display = "none"; // 読み込みが完了するまで一時的に非表示
+        resultImgFallback.style.display = "flex"; // 読み込み中の間はフォールバックを表示しておく
+        resultImg.src = `images/${imageCode}.png`;
+
+        // 6. 結果UIの更新
+        document.getElementById("result-code").textContent = finalCode;
+        document.getElementById("result-title").textContent = persona ? persona.name : "旅の自由人";
+        document.getElementById("result-sub").textContent = persona ? `「${persona.tagline}」` : "「自由な感覚で道を切り拓く」";
+        document.getElementById("result-description").textContent = persona ? persona.desc : "あなたの感性に合った魅力的な旅路がすぐそこに見えています。";
+
+        // 7. パラメータ可視化
+        const calcPercent = (score) => {
+          const pct = Math.round(((score - 8) / (40 - 8)) * 100);
+          return Math.max(0, Math.min(100, pct));
+        };
+
+        const pctP = calcPercent(scores.P);
+        const pctA = calcPercent(scores.A);
+        const pctV = calcPercent(scores.V);
+        const pctL = calcPercent(scores.L);
+
+        // バーの動き（右寄せにパーセンテージを適用）
+        document.getElementById("bar-PF").style.width = `${100 - pctP}%`; 
+        document.getElementById("bar-AC").style.width = `${100 - pctA}%`; 
+        document.getElementById("bar-VE").style.width = `${100 - pctV}%`; 
+        document.getElementById("bar-LS").style.width = `${100 - pctL}%`; 
+
+        // 8. 結果ビュー表示＆スクロール
+        resultView.style.display = "block";
+        setTimeout(() => {
+          resultView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
+      });
+
+      // リセット処理
+      resetBtn.addEventListener("click", () => {
+        quizForm.reset();
+        document.querySelectorAll(".question-card").forEach(c => c.classList.remove("highlight-error"));
+        errorMsg.style.display = "none";
+        resultView.style.display = "none";
+        resultImg.src = ""; // 画像ソースを初期化
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+    });
+  </script>
 </body>
+</html>
+
+```
+
